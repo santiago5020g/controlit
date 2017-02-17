@@ -1,0 +1,14 @@
+.Fondo
+{
+	background: linear-gradient(#80FF00,#6BD700,#468C00,#000000);
+	background: -webkit-linear-gradient(#80FF00,#6BD700,#468C00,#000000);
+	background: -moz-linear-gradient(#80FF00,#6BD700,#468C00,#000000);
+	background: -ms-linear-gradient(#80FF00,#6BD700,#468C00,#000000);
+	background: -o-linear-gradient(#80FF00,#6BD700,#468C00,#000000);
+	position: fixed;
+	left: 0;
+	right: 0;
+	height: 100%;
+}
+
+

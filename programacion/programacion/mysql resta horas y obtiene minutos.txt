@@ -1,0 +1,3 @@
+SELECT TIMESTAMPDIFF (MINUTE, Timestamp(fecha_inicio, hora_inicio ) ,Timestamp( fecha_inicio,hora_fin)) from tbltareas
+
+SELECT sum(TIMESTAMPDIFF (MINUTE, Timestamp(fecha_inicio, hora_inicio ) ,Timestamp( fecha_inicio,hora_fin))) from tbltareas

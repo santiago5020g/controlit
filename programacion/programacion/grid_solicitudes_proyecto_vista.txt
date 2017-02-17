@@ -1,0 +1,33 @@
+SELECT 
+    pro.idpro,
+    pro.nombre,
+    pro.descripcion,
+    pro.tecnico,
+    solicitudes.id,
+    solicitudes.Idcliente,     
+    clientes.nombre_empresa,
+    solicitudes.asunto,
+    solicitudes.descripcion,
+    solicitudes.idprioridad,
+    solicitudes.propietario,
+    users.name,
+    solicitudes.fecha_inicio_creacion,
+    solicitudes.hora_creacion,
+    solicitudes.fecha_inicio_programado,
+    solicitudes.hora_inicio_programado,
+    solicitudes.fecha_fin_programado,
+    solicitudes.hora_fin_programado,
+    solicitudes.idestado,
+    solicitudes.creadopor,
+    users2.name,
+    solicitudes.contacto,
+    solucion,
+    fechafacturacion
+FROM 
+    tblsolicitudes solicitudes inner join tblclientes clientes on solicitudes.Idcliente=clientes.id_cli 
+inner join sec_users users on users.login=solicitudes.propietario
+inner join sec_users users2 on users2.login=solicitudes.creadopor
+inner join tblproyectos pro on pro.idpro=solicitudes.idproyecto
+
+WHERE  solicitudes.idestado in(1,2,3,4,6) and pro.idpro<>1
+order by solicitudes.fecha_fin_programado asc,  solicitudes.hora_fin_programado asc,solicitudes.hora_inicio_programado asc

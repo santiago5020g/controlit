@@ -1,0 +1,149 @@
+
+$error_cliente_bloqueado=0;
+$error_contrato_inactivo=0;
+
+sc_lookup(tota_tareas,"select count(1) as cantidad FROM  tbltareas ta inner join tblsolicitudes so on so.id=ta.idso
+WHERE (ta.idcategoria =210 or ta.idsitio=160 or 
+ta.propietario in('admin','na') or CHARACTER_LENGTH(ta.observaciones )<11
+OR observaciones = "" OR observaciones IS NULL) 
+and so.idcontra={contrato_idcontrato}");
+
+	if({tota_tareas[0][0]}!=0)
+	{
+	
+$total_tareas2={tota_tareas[0][0]};
+sc_lookup(tareas,"select ta.idtareas as cantidad FROM  tbltareas 
+ta inner join tblsolicitudes so on so.id=ta.idso
+WHERE (ta.idcategoria =210 or ta.idsitio=160 or 
+ta.propietario in('admin','na') or CHARACTER_LENGTH(ta.observaciones )<11
+OR observaciones = "" OR observaciones IS NULL) 
+and so.idcontra={contrato_idcontrato} ");	
+
+$tare={tareas[0][0]};
+sc_lookup(solicitud,"select so.id from tblsolicitudes so inner join tbltareas ta on ta.idso=so.id 
+where ta.idtareas=$tare");	
+$solicitu={solicitud[0][0]};
+
+	echo("</br> hay $total_tareas2 tareas 
+          sin diligenciar de la solicitud $solicitu , las tareas son
+			: <br> <br>");
+			for($i=0;$i<$total_tareas2;$i++)
+			{
+				$tareas2={tareas[$i][0]};
+				echo("$tareas2 <br>");
+			}
+		}
+		
+		
+
+		else
+			{
+				sc_lookup(solicitud_sin_factura,"select so.id,count(1) from tblsolicitudes so where (so.fechafacturacion='' 
+				or so.fechafacturacion IS NULL or so.numero_factura='' 
+				or so.numero_factura IS NULL) and so.idestado=1 and so.idcontra={contrato_idcontrato}");
+				
+						if({solicitud_sin_factura[0][1]}!=0)
+							{
+								$soll={solicitud_sin_factura[0][0]};
+								sc_exec_sql("update tblsolicitudes set idestado=3 where id=$soll");
+								echo("la solicitud $soll no tiene numero y/o fecha de facturacion
+								,su estado ahora es pendiente por facturar");
+							}
+				
+				else
+					{
+						sc_lookup(solicitud_sin_factura,"select so.id,count(1) from tblsolicitudes so where (so.fechafacturacion='' 
+						or so.fechafacturacion IS NULL or so.numero_factura='' 
+						or so.numero_factura IS NULL) and so.idestado=3 and so.idcontra={contrato_idcontrato}");
+				
+						if({solicitud_sin_factura[0][1]}!=0)
+							{
+								$soll={solicitud_sin_factura[0][0]};
+								echo("la solicitud $soll no tiene numero y/o 
+							fecha de facturacion esta en pendiente por facturar
+								");
+							}
+					}
+						
+						
+
+							sc_lookup(dataset,"SELECT so.id as so_id,SUM( tarea.tiempo_efectivo ) as 
+											suma_tiempo_efectivo,contra.valor as contrato_valor
+											FROM tblsolicitudes so INNER JOIN tbltareas tarea ON so.id = tarea.idso
+											inner join tblcontratos contra on contra.idcontrato=so.idcontra
+											where so.idcontra={contrato_idcontrato} and so.idestado in(1) 
+							and 
+						so.fechafacturacion !='' 
+						and so.fechafacturacion IS NOT NULL and so.numero_factura !='' 
+						and so.numero_factura IS NOT NULL");
+							
+							if({dataset[0][0]}!=0)
+								{
+							$valor_contrato={dataset[0][2]};
+							$suma_tiempo_efectivo2={dataset[0][1]};
+							$solicitudd={dataset[0][0]};
+							$valor_a_distribuir=$valor_contrato/($suma_tiempo_efectivo2/60);
+							
+							
+										sc_exec_sql("update tbltareas tarea inner join tblsolicitudes so 
+										on so.id=tarea.idso 
+										set tarea.valor_facturar=$valor_a_distribuir,so.idestado=6 
+										where tarea.idso='$solicitudd' and tarea.idcategoria!=22 ");
+								 }
+				
+							$fecha_creacion2=date("Y-m-d");
+							$hora_creacion2=date("H:i");
+							$month = date('m');
+							$year = date('Y');
+							$day = date("d", mktime(0,0,0, $month+1, 0, $year));
+							$fin_mes=date('Y-m-d', mktime(0,0,0, $month, $day, $year));
+				
+					
+							$Cliente={contrato_cliente};
+							sc_lookup(dataset22,"select descripcion from tbltipos_contrato where id_tipo
+							={contrato_tipo_contrato}");
+							sc_lookup(dataset,"SELECT correo,nombre_contacto_principal 
+							from tblclientes WHERE id_cli='$Cliente'");
+							sc_lookup(dataset5,"SELECT id
+							from tblsede WHERE empresa='$Cliente' LIMIT 1");
+							$sede1={dataset5[0][0]};
+							$correo1={dataset[0][0]};
+							$nombre_contacto_principal1={dataset[0][1]};
+							$tipo_contrato22={dataset22[0][0]};
+							
+				
+							sc_lookup(dataset_cliente, "select estado_bloqueo from tblclientes where 
+							id_cli='{contrato_cliente}'");
+							sc_lookup(dataset_contrato_estado, "select idestado_contrato from tblcontratos where 
+							cliente='{contrato_cliente}'");
+				/*
+							$error_cliente_bloqueado=0;
+							$error_contrato_inactivo=0;
+							if({dataset_cliente}!=false){$error_cliente_bloqueado={dataset_cliente[0][0]};}
+							if({dataset_contrato_estado}!=false){$error_contrato_inactivo={dataset_contrato_estado[0][0]};}
+*/
+								
+								if({dataset_cliente[0][0]}==1 && {dataset_contrato_estado[0][0]}==1)
+									{
+							sc_exec_sql("insert into tblsolicitudes 
+							(Idcliente,asunto,descripcion,idprioridad,propietario,fecha_inicio_creacion,
+							hora_creacion,fecha_inicio_programado,hora_inicio_programado,fecha_fin_programado,
+							hora_fin_programado,idestado,creadopor,idcontra,correo,contacto,sedes
+							) values('{contrato_cliente}','$tipo_contrato22','{contrato_descripcion}',
+							1,
+							'{contrato_usuario}','$fecha_creacion2','$hora_creacion2','{fecha_creacion2}','$hora_creacion2',
+							'$fin_mes','23:00:00',1,'[login]','{contrato_idcontrato}','$correo1',
+							'$nombre_contacto_principal1','$sede1')");
+							
+							
+							sc_lookup(dataset2,"select MAX(id) from tblsolicitudes");
+							$idso={dataset2[0][0]};
+							$sql="INSERT INTO tbltareas(idso,propietario,fecha_inicio,hora_inicio,hora_fin,idEstado) 
+							VALUES ($idso,'{contrato_usuario}','$fecha_creacion2','$hora_creacion2','23:59:59',1);";
+							sc_exec_sql($sql);
+									}
+		
+								else {echo "</br> Imposible crear solicitudes porque el contrato {contrato_idcontrato} 
+								esta inactivo o el cliente esta bloqueado";}
+							
+					}

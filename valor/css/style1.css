@@ -1,0 +1,8 @@
+div.message
+{
+	width: 300px;
+	height: 200px;
+	background: #0080C0;
+	color: #FFFFFF;
+	font-weight: bold;
+}

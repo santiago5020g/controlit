@@ -1,0 +1,30 @@
+body{background: #250944; margin: 120px;}
+p{color: #ffffff; font-size: 30px;}
+
+p span {color: #0113EF; font-size: 50px;}
+
+span{color: #ffffff;font-size: 12px;}
+
+
+
+nav
+{
+	background-color:root #16969C;
+	margin: 0px;
+}
+nav li
+{
+	display: inline-block;
+	border-right: 1px solid #212821;
+	padding: 16px;
+}
+
+nav li a{color: #ffffff;text-decoration: none;}
+nav li a:hover{color: #22F20B;}
+nav li a:link{color: #FC8A87;}
+nav li a:visited{color: #879EFA;}
+
+
+
+
+

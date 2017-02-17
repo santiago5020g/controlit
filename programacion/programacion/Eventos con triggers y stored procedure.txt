@@ -1,0 +1,158 @@
+EVENTO
+
+CREATE EVENT kkk
+ON SCHEDULE 
+    EVERY 1 DAY
+    STARTS '2013-12-17 10:18:00'
+COMMENT 'Test'
+DO insert into eventos.prueba_eventos(fecha,nombre)
+values(now(),'a')
+
+
+
+CONSULTA NORMAL INSERTA LOS DATOS DE LA SOLICITUDES EN LA TABLA REGISTROS BUFFER
+
+insert into tblregistros_buffer(fecha,idsolicitud,responsable,idestado_solicitud,buffer)
+SELECT NOW(), id, propietario, idestado,(
+(
+TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , NOW())/3600
+) / ( TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , TIMESTAMP( fecha_fin_programado, hora_fin_programado )) /3600 )
+) *100
+FROM tblsolicitudes
+where idestado in(1,2)
+
+
+
+
+
+TRIGGER: SE EJECUTA CUANDO SE HACE CUALQUIER INSERCCION DE DATOS EN LA TABLA REGISTROS BUFFER
+
+DELIMITER |
+CREATE TRIGGER buff BEFORE INSERT ON tblregistros_buffer
+FOR EACH ROW 
+BEGIN
+    IF NEW.buffer  between 0 and 33 THEN
+      SET NEW.idcolor=2;
+    elseIF NEW.buffer  between 34 and 66 THEN
+      SET NEW.idcolor=3;
+    elseIF NEW.buffer  between 67 and 100 THEN
+      SET NEW.idcolor=4;
+    elseIF NEW.buffer>100 THEN
+      SET NEW.idcolor=5;
+    else 
+      SET NEW.idcolor=1;
+    END IF;
+ END|
+
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+evento despues de este se ejecuta el trigger buff
+
+CREATE EVENT prueba_controlit
+ON SCHEDULE 
+    EVERY 1 DAY
+    STARTS '2013-12-17 08:36:00'
+COMMENT 'Test'
+DO insert into tblregistros_buffer(fecha,idsolicitud,responsable,idestado_solicitud,buffer)
+SELECT NOW(), id, propietario, idestado,(
+(
+TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , NOW())/3600
+) / ( TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , TIMESTAMP( fecha_fin_programado, hora_fin_programado )) /3600 )
+) *100
+FROM tblsolicitudes
+where idestado in(1,2)
+
+
+
+
+
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_pro()
+
+BEGIN
+
+
+
+insert into tblregistros_buffer(fecha,idsolicitud,responsable,idestado_solicitud,buffer)
+SELECT NOW(), id, propietario, idestado,(
+(
+TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , NOW())/3600
+) / ( TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , TIMESTAMP( fecha_fin_programado, hora_fin_programado )) /3600 )
+) *100
+FROM tblsolicitudes
+where idestado in(1,2);
+
+
+	update tblregistros_buffer SET idcolor=2
+where buffer between 0 and 33;
+
+	update tblregistros_buffer SET idcolor=3
+where buffer between 34 and 66;
+
+	update tblregistros_buffer SET idcolor=4
+where buffer between 67 and 100;
+
+	update tblregistros_buffer SET idcolor=5
+where buffer > 100;
+
+	update tblregistros_buffer SET idcolor=1
+where buffer < 0;
+
+
+END
+
+
+ejecutando el stored procedure sp_pro() en un evento
+
+CREATE EVENT kkk 
+ON SCHEDULE 
+    EVERY 1 DAY
+    STARTS '2013-12-17 10:18:00'
+COMMENT 'Test'
+DO call sp_pro()
+
+
+???????????????????????????????????????????????????????????????????????????????????????
+
+
+--evento para pasar a facturar
+
+CREATE EVENT facturar 
+ON SCHEDULE 
+ EVERY 1 month STARTS '2013-12-17 10:18:00'
+COMMENT 'Test'
+DO call sp_facturar()
+
+
+DELIMITER $$CREATE PROCEDURE sp_facturar()
+BEGIN
+UPDATE tblsolicitudes set idestado=4 where fechafacturacion!="" and numero_factura!="" and
+LAST_DAY(Date_format(now(),'%Y-%m-%d'))=Date_format(now(),'%Y-%m-%d') and idestado=1
+END
+
+
+
+
+SELECT so.id as so_id,so.idestado as so_idestado,SUM( tarea.tiempo_efectivo ) as suma_tiempo_efectivo
+FROM tblsolicitudes so INNER JOIN tbltareas tarea ON so.id = tarea.idso
+inner join tblcategoria ca on ca.categoriaid=tarea.idcategoria
+where so.fechafacturacion!="" and so.numero_factura!="" and
+LAST_DAY(Date_format(now(),'%Y-%m-%d'))='2014-09-30' and tarea.idcategoria!=22 and so.idcontra!=1
+group by so.id

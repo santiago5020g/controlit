@@ -1,0 +1,36 @@
+SELECT id, fecha_inicio_programado, hora_inicio_programado, fecha_fin_programado, hora_fin_programado, (
+(
+TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , NOW())/3600
+) / ( TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , TIMESTAMP( fecha_fin_programado, hora_fin_programado )) /3600 )
+) *100
+FROM tblsolicitudes
+where idestado in(1,2)
+
+
+IF recordfound = 0 THEN
+  /* insert your record */
+ELSE
+  /* update your record */
+END IF;
+
+
+
+
+
+insert into tblregistros_buffer(idcolor)
+values
+IF ((
+(
+TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , NOW())/3600
+) / ( TIMESTAMPDIFF( 
+SECOND , TIMESTAMP( fecha_inicio_programado, hora_inicio_programado ) , TIMESTAMP( fecha_fin_programado, 
+
+hora_fin_programado )) /3600 )
+) *100
+FROM tblsolicitudes
+where idestado in(1,2))>0 THEN
+(1), 
+ENDIF
